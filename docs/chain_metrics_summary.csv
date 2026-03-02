@@ -27,7 +27,11 @@ job,path,label,mode,target_fps,frames,duration_s,achieved_fps,io_mib_per_sec,p95
 604469,results/chain/604469/bench_gpu/gpu_matmul.json,chain-gpu-matmul-604469,metadata,30.0,200,6.667,30.0,7.5,33.334,
 604469,results/chain/604469/bench_paced/full_60fps.json,chain-full-60fps-604469,full,60.0,800,13.3334,60.0,15.0,16.667,
 604469,results/chain/604469/smoke/metrics.json,chain-smoke-604469,metadata,0.0,200,0.000394,509874.946,127468.736,0.002,
-604775,results/chain/604775/smoke/metrics.json,chain-smoke-604775,metadata,0.0,200,0.000401,498688.442,124672.110,0.002
+604775,results/chain/604775/smoke/metrics.json,chain-smoke-604775,metadata,0.0,200,0.000401,498688.442,124672.110,0.002,
 604775,results/chain/604775/bench_full/full_unpaced.json,chain-full-unpaced-604775,full,0.0,800,1.808806,442.281,110.570,3.648,
 604775,results/chain/604775/bench_gpu/gpu_matmul.json,chain-gpu-matmul-604775,full,30.0,200,6.666723,30.000,7.500,33.334,torch
 604775,results/chain/604775/bench_paced/full_60fps.json,chain-full-60fps-604775,full,60.0,800,13.333391,60.000,15.000,16.667,
+604781,results/chain/604781/smoke/metrics.json,chain-smoke-604781,metadata,0.0,200,0.000377,530879.932,132719.983,0.002,
+604781,results/chain/604781/bench_full/full_unpaced.json,chain-full-unpaced-604781,full,0.0,800,1.641217,487.443,121.861,2.627,
+604781,results/chain/604781/bench_gpu/gpu_matmul.json,chain-gpu-matmul-604781,full,30.0,200,6.666723,30.000,7.500,33.334,torch
+604781,results/chain/604781/bench_paced/full_60fps.json,chain-full-60fps-604781,full,60.0,800,13.333388,60.000,15.000,16.667,
