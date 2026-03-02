@@ -110,6 +110,7 @@ Synthetic GPU workload support (for efficiency probing):
 | 605012 | benchmark smoke-path control (`gh-dev`, typo path) | FAILED | 00:00:07 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
 | 605013 | benchmark smoke-path control (`gh-dev`, typo path) | FAILED | 00:00:07 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
 | 605014 | benchmark smoke-path control (`gh-dev`) | COMPLETED | 00:00:10 | `READ_MODE=full`, `MAX_FILES=800`, `GPU_WORKLOAD=none`; `frames=800`, `FPS=367.31`, `IO=91.83 MiB/s`, `p95=4.14 ms`, `gpu_work_calls=0` |
+| 605066 | benchmark GPU probe (full, workload) | COMPLETED | 00:00:13 | `GPU_WORKLOAD=matmul`, `GPU_ITERS=2`, `GPU_WORK_EVERY_N=1`, `GPU_MAT_SIZE=1024` |
 | 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
@@ -130,6 +131,7 @@ Synthetic GPU workload support (for efficiency probing):
   - `604803` (matmul every frame, `1024`, `iters=4`, `max_files=3200`): `438.87 FPS`, `109.72 MiB/s`, `p95 2.65 ms`, `gpu_work_calls=800`.
   - `604882` (no GPU workload, `full`, `max_files=200`): `315.26 FPS`, `78.82 MiB/s`, `p95 4.41 ms`, `gpu_work_calls=0`.
   - `605014` (no GPU workload, `full`, `max_files=800`): `367.31 FPS`, `91.83 MiB/s`, `p95 4.14 ms`, `gpu_work_calls=0`.
+  - `605066` (matmul, `full`, `max_files=200`, `iters=2`): `377.11 FPS`, `94.28 MiB/s`, `p95 3.52 ms`, `gpu_work_calls=200`.
 - Paced 60 FPS runs met target exactly: replay-full paced runs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
 - Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
 
@@ -187,6 +189,7 @@ Synthetic GPU workload support (for efficiency probing):
 | 604803 | bench-604803 | full | 0 | 800 | 1.82 | 438.87 | 109.72 |
 | 604882 | bench-604882-control | full | 0 | 200 | 0.63 | 315.26 | 78.82 |
 | 605014 | bench-605014-control | full | 0 | 800 | 2.18 | 367.31 | 91.83 |
+| 605066 | bench-605066-gpu-on | full | 0 | 200 | 0.53 | 377.11 | 94.28 |
 
 Interpretation notes:
 - `metadata` mode unpaced runs are control-path fast paths and are not representative of end-to-end operator compute.
@@ -224,6 +227,9 @@ Observed behavior:
   - `gpu_work_calls=0`, memory around `3 MiB`, power around `86.6 W`, utilization `0%` (42 samples).
 - `605014` produced `gpu_metrics.csv` with `GPU_WORKLOAD=none`:
   - `gpu_work_calls=0`, memory around `8 MiB`, power around `90.4 W`, utilization `0%` (119 samples).
+- `605066` produced `gpu_metrics.csv` with `GPU_WORKLOAD=matmul`, `iters=2`, `work_every_n=1`:
+  - `gpu work calls=200`, memory moved roughly `6 -> 680 MiB`, power `90.41 -> 140.12 W`,
+  - sampled `utilization.gpu` mean `0.49%`, max `6%` (interval = 20ms), 268 samples.
 - `604795` produced `gpu_metrics.csv` in direct benchmark mode with `GPU_WORKLOAD=matmul`, `iters=2`, `work_every_n=10`:
   - `gpu work calls=80`, memory moved `4 -> 680 MiB`, power `93.93 -> 141.88 W`,
   - sampled `utilization.gpu` mean `0.33%`, max `3%` (interval = 20ms), 300 samples.
@@ -311,4 +317,4 @@ Current status as of March 2, 2026:
 - Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473,604775,604781}`; telemetry was unavailable on `604244,604249,604250,604271,604463,604473`, while `604469,604775,604781` include GPU telemetry artifacts.
 - Current outstanding runs:
   - `604239` remains `PENDING` (DependencyNeverSatisfied) in unrelated geospatial workflow (`tacc-gpu-geospatial`).
-  - Additional benchmark control attempts `604879`/`605012`/`605013` failed on typoed input path; `604882` and `605014` completed successfully (`GPU_WORKLOAD=none`) and provide clean control baselines.
+  - Additional benchmark control attempts `604879`/`605012`/`605013` failed on typoed input path; `604882`, `605014`, and `605066` completed successfully (`605066` included `GPU_WORKLOAD=matmul`).
