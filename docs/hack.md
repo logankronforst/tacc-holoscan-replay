@@ -105,6 +105,8 @@ Synthetic GPU workload support (for efficiency probing):
 | 604797 | benchmark GPU probe (typo path) | FAILED | 00:00:10 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
 | 604798 | benchmark GPU probe (typo path) | FAILED | 00:00:07 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
 | 604803 | benchmark GPU probe (full, matmul) | COMPLETED | 00:00:14 | `GPU_WORKLOAD=matmul`, `GPU_ITERS=4`, `GPU_WORK_EVERY_N=1`, `READ_MODE=full`, `MAX_FILES=3200` |
+| 604879 | benchmark smoke-path control (typo path) | FAILED | 00:00:08 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
+| 604882 | benchmark smoke-path control (`gh-dev`) | COMPLETED | 00:00:08 | `READ_MODE=full`, `MAX_FILES=200`, `GPU_WORKLOAD=none`; `frames=200`, `FPS=315.26`, `IO=78.82 MiB/s`, `p95=4.41 ms`, `gpu_work_calls=0` |
 | 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
@@ -123,6 +125,7 @@ Synthetic GPU workload support (for efficiency probing):
   - `604794` (matmul every frame, `1024`, `iters=4`): `449.94 FPS`, `112.48 MiB/s`, `p95 2.56 ms`, `gpu_work_calls=800`.
   - `604795` (matmul every 10 frames, `1024`, `iters=2`): `473.60 FPS`, `118.40 MiB/s`, `p95 2.69 ms`, `gpu_work_calls=80`.
   - `604803` (matmul every frame, `1024`, `iters=4`, `max_files=3200`): `438.87 FPS`, `109.72 MiB/s`, `p95 2.65 ms`, `gpu_work_calls=800`.
+  - `604882` (no GPU workload, `full`, `max_files=200`): `315.26 FPS`, `78.82 MiB/s`, `p95 4.41 ms`, `gpu_work_calls=0`.
 - Paced 60 FPS runs met target exactly: replay-full paced runs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
 - Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
 
@@ -134,6 +137,7 @@ Synthetic GPU workload support (for efficiency probing):
   - Unpaced full p95 latency: `2.405 ms` (range `2.278`–`2.628 ms`).
 - Paced 60 FPS behavior: all runs held target exactly (`60.00 FPS`, `15.00 MiB/s`, `~16.668 ms` p95).
 - Failure modes logged with causes:
+  - `604879`: `input dir not found: /scratch/11039/logankforst/replay_data` from submit typo.
   - `604796`/`604797`/`604798`: same `INPUT_DIR` typo (`/scratch/11039/logankforst/replay_data`) in benchmark submit exports.
   - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
   - `604761`: replay stages ran, but GPU synthetic init failed in same way (`cupy` missing, `torch` without CUDA).
@@ -175,6 +179,7 @@ Synthetic GPU workload support (for efficiency probing):
 | 604794 | bench-604794 | full | 0 | 800 | 1.78 | 449.94 | 112.48 |
 | 604795 | bench-604795 | full | 0 | 800 | 1.78 | 473.60 | 118.40 |
 | 604803 | bench-604803 | full | 0 | 800 | 1.82 | 438.87 | 109.72 |
+| 604882 | bench-604882-control | full | 0 | 200 | 0.63 | 315.26 | 78.82 |
 
 Interpretation notes:
 - `metadata` mode unpaced runs are control-path fast paths and are not representative of end-to-end operator compute.
@@ -208,6 +213,8 @@ Observed behavior:
 - `604781` produced `gpu_metrics.csv` with `CHAIN_GPU_WORKLOAD=matmul` and backend `torch`:
   - `gpu work calls=200`, memory moved roughly `2 -> 678 MiB`, power around `70.23 -> 115.95 W`,
   - sampled `utilization.gpu` remained `0%` across all 1362 samples at `-lms 20`.
+- `604882` produced `gpu_metrics.csv` with `GPU_WORKLOAD=none`:
+  - `gpu_work_calls=0`, memory around `3 MiB`, power around `86.6 W`, utilization `0%` (42 samples).
 - `604795` produced `gpu_metrics.csv` in direct benchmark mode with `GPU_WORKLOAD=matmul`, `iters=2`, `work_every_n=10`:
   - `gpu work calls=80`, memory moved `4 -> 680 MiB`, power `93.93 -> 141.88 W`,
   - sampled `utilization.gpu` mean `0.33%`, max `3%` (interval = 20ms), 300 samples.
@@ -295,3 +302,5 @@ Current status as of March 2, 2026:
 - Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473,604775,604781}`; telemetry was unavailable on `604244,604249,604250,604271,604463,604473`, while `604469,604775,604781` include GPU telemetry artifacts.
 - Current outstanding runs:
   - `604239` remains `PENDING` (DependencyNeverSatisfied) in unrelated geospatial workflow (`tacc-gpu-geospatial`).
+  - `604870`, `604874` remain `PENDING` on `gh` (`Priority`) from earlier pending batch submits.
+  - Benchmark control attempts `604879` failed (typo path); `604882` completed successfully with no GPU work.
