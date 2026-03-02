@@ -95,11 +95,17 @@ Synthetic GPU workload support (for efficiency probing):
 | 604271 | replay chain (gg, none) | COMPLETED | 00:00:33 | post-summary bugfix validates generated artifact counts (`generated: 4`) |
 | 604463 | replay chain (gg, none) | COMPLETED | 00:00:33 | smoke + unpaced full + paced + GPU slot (`CHAIN_GPU_WORKLOAD=none`) |
 | 604473 | replay chain (gg, none) | COMPLETED | 00:00:31 | smoke + unpaced full + paced + GPU slot (`CHAIN_GPU_WORKLOAD=none`) |
+| 604760 | replay chain (input typo repeat) | FAILED | 00:00:10 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
+| 604761 | replay chain (gg, matmul requested) | FAILED | 00:00:28 | replay stages completed; synthetic GPU init failed (`cupy` missing, `torch` without CUDA) |
 | 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
 ## March 2 Concrete Chain Results (Replay-Only)
 - Completed chain jobs with identical workload pattern: `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473`.
+- Additional replay-only chain attempt with `CHAIN_GPU_WORKLOAD=matmul`:
+  - `604761` reached smoke + full + paced stages before failing during GPU benchmark init due CUDA backend unavailability.
+  - `604761` full unpaced: `462.04 FPS`, `115.51 MiB/s`, `p95 2.898 ms` (`800` frames).
+  - `604761` paced 60 FPS: exact target (`60.00 FPS`, `15.00 MiB/s`).
 - Unpaced full run aggregate (800 files, metadata not used):
   - Achieved FPS: min `450.35`, max `537.62`, mean `497.76`.
   - I/O throughput: min `112.59` MiB/s, max `134.41` MiB/s, mean `124.44` MiB/s.
@@ -116,7 +122,9 @@ Synthetic GPU workload support (for efficiency probing):
 - Paced 60 FPS behavior: all runs held target exactly (`60.00 FPS`, `15.00 MiB/s`, `~16.668 ms` p95).
 - Failure modes logged with causes:
   - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
+  - `604761`: replay stages ran, but GPU synthetic init failed in same way (`cupy` missing, `torch` without CUDA).
   - `604243`/`604276`: `INPUT_DIR` typo in submit path export.
+  - `604760`: `INPUT_DIR` typo (`/scratch/11039/logankforst/replay_data`).
 - Full raw outputs are linked for exact values in:
   - `docs/chain_metrics_summary.csv`
 
