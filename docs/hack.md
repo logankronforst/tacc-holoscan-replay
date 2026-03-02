@@ -26,8 +26,8 @@ Not validated in this campaign:
 ## Platform and Runtime
 - System: TACC Vista.
 - Account used: `CCR25007`.
-- Partition used: `gh`.
-- GPU observed: NVIDIA GH200 120GB (single GPU per job).
+- Partitions used in this campaign: `gh`, `gg`.
+- GPU observed: NVIDIA GH200 120GB on nodes where telemetry is available.
 - Replay input root: `/scratch/11039/logankronforst/replay_data`.
 - Repo root: `/work/11039/logankronforst/vista/tacc-holoscan-replay`.
 
@@ -69,7 +69,6 @@ Synthetic GPU workload support (for efficiency probing):
   - `jobs/replay_sweep.sbatch`
 
 ## Job History (Slurm Accounting)
-All listed jobs completed with `ExitCode 0:0`.
 
 ### Original Campaign and Follow-up Validation
 | Job ID | Role | State | Elapsed | Notes |
@@ -88,6 +87,39 @@ All listed jobs completed with `ExitCode 0:0`.
 | 603089 | efficiency probe B | COMPLETED | 00:00:34 | `full`, 30 FPS |
 | 603090 | efficiency probe C | COMPLETED | 00:00:06 | `metadata`, unpaced |
 | 603104 | synthetic GPU probe | COMPLETED | 00:00:17 | `GPU_WORKLOAD=matmul`, backend auto |
+| 604242 | replay chain (matmul enabled) | FAILED | 00:00:28 | `cupy` missing, and `torch` CUDA unavailable for synthetic workload |
+| 604243 | replay chain (submit typo) | FAILED | 00:00:09 | `INPUT_DIR` typo prevented `replay_entrypoint.py` from starting |
+| 604244 | replay chain (gg, none) | COMPLETED | 00:00:30 | smoke + unpaced full + paced + GPU slot (no workload) |
+| 604249 | replay chain (gg, none) | COMPLETED | 00:00:31 | same profile as 604244; no `gpu_metrics.csv` produced |
+| 604250 | replay chain (gg, none) | COMPLETED | 00:00:32 | same profile as 604249; no `gpu_metrics.csv` produced |
+| 604271 | replay chain (gg, none) | COMPLETED | 00:00:33 | post-summary bugfix validates generated artifact counts (`generated: 4`) |
+| 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
+| 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
+
+## March 2 Concrete Chain Results (Replay-Only)
+- Completed chain jobs with identical workload pattern: `604244`, `604249`, `604250`, `604271`.
+- Unpaced full run aggregate (800 files, metadata not used):
+  - Achieved FPS: min `479.75`, max `515.32`, mean `501.03`.
+  - I/O throughput: min `119.94` MiB/s, max `128.83` MiB/s, mean `125.26` MiB/s.
+  - p95 frame time: min `2.278 ms`, max `2.628 ms`, mean `2.405 ms`.
+- Paced 60 FPS runs met target exactly: all four jobs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
+- Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
+
+### Reusable Summary for Reporting
+- Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271` (identical profile).
+- Quantified outcomes:
+  - Unpaced full mean FPS: `501.03` (range `479.75`–`515.32`).
+  - Unpaced full IO: `125.26 MiB/s` mean (range `119.94`–`128.83 MiB/s`).
+  - Unpaced full p95 latency: `2.405 ms` mean (range `2.278`–`2.628 ms`).
+- Paced 60 FPS behavior: all runs held target exactly (`60.00 FPS`, `15.00 MiB/s`, `~16.668 ms` p95).
+- Failure modes logged with causes:
+  - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
+  - `604243`/`604276`: `INPUT_DIR` typo in submit path export.
+- Full raw outputs are linked for exact values in:
+  - `docs/chain_metrics_summary.csv`
+
+### Raw Artifacts
+- [docs/chain_metrics_summary.csv](/work/11039/logankronforst/vista/tacc-holoscan-replay/docs/chain_metrics_summary.csv)
 
 ## Benchmark Results Snapshot
 ### Bench and Smoke Metrics (selected)
@@ -103,6 +135,10 @@ All listed jobs completed with `ExitCode 0:0`.
 | 603089 | bench-603089 | full | 30 | 800 | 26.666723 | 30.00 | 7.50 |
 | 603090 | bench-603090 | metadata | 0 | 800 | 0.001529 | 523246.23 | 130811.56 |
 | 603104 | bench-603104 | metadata | 30 | 200 | 6.666722 | 30.00 | 7.50 |
+| 604244 | chain-smoke-604244 | metadata | 0 | 200 | 0.000393 | 508834.75 | 127208.69 |
+| 604249 | chain-full-unpaced-604249 | full | 0 | 800 | 1.57 | 515.32 | 128.83 |
+| 604250 | chain-full-unpaced-604250 | full | 0 | 800 | 1.58 | 507.37 | 126.84 |
+| 604271 | chain-full-unpaced-604271 | full | 0 | 800 | 1.60 | 501.67 | 125.42 |
 
 Interpretation notes:
 - `metadata` mode unpaced runs are control-path fast paths and are not representative of end-to-end operator compute.
@@ -125,6 +161,8 @@ Telemetry method:
 Observed behavior:
 - Baseline replay runs show sustained `utilization.gpu = 0%` while jobs still complete and produce throughput.
 - Synthetic GPU probe (`603104`) shows backend activation (`torch`), `gpu_work_calls=200`, memory rise (~2 MiB to ~676 MiB), and power rise (~90W to ~136W), while sampled `utilization.gpu` still reports `0%`.
+- Current `gg` replay chain runs (`604249`, `604250`, `604271`) complete with `gpu_monitor_status.txt` containing `nvidia-smi` unavailable, so no telemetry file is produced.
+- 604244 (`gh`) also lacked `gpu_metrics.csv`, indicating node-level utility/tooling inconsistency across partitions.
 
 Conclusion from telemetry:
 - On this workload/platform, `utilization.gpu [%]` alone is insufficient to infer true GPU activity.
@@ -143,6 +181,8 @@ Hard constraints:
 - No claim of live Sensor Bridge parity.
 - Queue wait and startup overhead can dominate short jobs.
 - Shared filesystem contention can perturb latency tails.
+- Queue placement and node mix is unstable; short jobs can sit in `PENDING` for long windows with `Priority/Resources`.
+- Node-level GPU observability is inconsistent (`nvidia-smi` may be absent).
 
 Practical implications:
 - Always run smoke gate before long chains.
@@ -194,11 +234,14 @@ sbatch --parsable -A CCR25007 -p gh \
   - `jobs/replay_benchmark.sbatch`
   - `jobs/replay_sweep.sbatch`
   - `jobs/aggregate_report.sbatch`
+- Analysis inputs:
+  - `docs/chain_metrics_summary.csv`
 - Supporting analysis doc: `docs/limits-and-observed-performance.md`
 
 ## Final Technical Status
-Current status as of March 1, 2026:
+Current status as of March 2, 2026:
 - Replay workflow and reporting pipeline are stable and reproducible on Vista.
 - Timestamp-file handling is explicitly validated.
-- Synthetic GPU workload path is implemented and exercised.
+- Synthetic GPU workload path is implemented; execution is currently blocked on current nodes by missing CUDA (`cupy` absent, `torch` no CUDA).
 - Live Sensor Bridge parity remains out of scope and unclaimed.
+- Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271}` with no GPU telemetry captured on those host sets.

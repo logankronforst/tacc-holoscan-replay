@@ -9,11 +9,11 @@ Replay validated. Live sensor path validated: no.
 Do not claim live Sensor Bridge parity unless dedicated provisioning is confirmed.
 
 ## Environment
-- Date of observed runs: March 1, 2026 (UTC-6 local scheduler time)
+- Date of observed runs: March 1, 2026 (UTC-6 local scheduler time); additional replay-only chain runs on March 2, 2026.
 - Cluster/system: TACC Vista
-- Queue/partition: `gh`
+- Queue/partition: `gh` (historical), `gg` (March 2 replay chain runs)
 - Account: `CCR25007`
-- GPU type/count: 1x NVIDIA GH200 120GB per job (from `nvidia-smi` telemetry)
+- GPU type/count: 1x NVIDIA GH200 120GB observed on telemetry-capable jobs; multiple `gg/gh` nodes in March 2 runs did not provide `nvidia-smi` access.
 - Replay input path: `/scratch/11039/logankronforst/replay_data`
 - Runtime: `module load gcc/13.2.0 python3` (with fallback and hard `python3` availability check)
 - GPU telemetry sampling: `nvidia-smi ... -lms 500` (500 ms interval)
@@ -43,6 +43,7 @@ Do not claim live Sensor Bridge parity unless dedicated provisioning is confirme
   - Sweep job produced six per-mode JSONs plus `summary.csv` and `summary.md`.
   - Aggregate job produced/updated `summary.csv` and `summary.md`.
 - Completion status: all listed jobs `COMPLETED` with `ExitCode 0:0`.
+- March 2 chain jobs `604244`, `604249`, `604250`, `604271` completed with replay stages and `nvidia-smi` telemetry missing (`gpu_metrics.csv` absent) on those nodes.
 - Failures/retries: none observed in Slurm accounting for listed jobs.
 
 ## Observed Performance
@@ -52,6 +53,8 @@ Do not claim live Sensor Bridge parity unless dedicated provisioning is confirme
 | 603088 | bench-603088 | full | 0 | 800 | 1.542184 | 518.74 | 129.69 | 2.2971 | 0 | True* |
 | 603089 | bench-603089 | full | 30 | 800 | 26.666723 | 30.00 | 7.50 | 33.3336 | 0 | True* |
 | 603090 | bench-603090 | metadata | 0 | 800 | 0.001529 | 523246.23 | 130811.56 | 0.0020 | 0 | True* |
+| 604244 | chain-604244-smoke | metadata | 0 | 200 | 0.000393 | 508834.75 | 127208.69 | 0.0021 | 0 | True* |
+| 604244 | chain-604244-full | full | 0 | 800 | 1.564000 | 479.75 | 119.94 | 2.6282 | 0 | True* |
 
 \*`True` here is default behavior when no timestamp file is provided; it is not a fidelity assertion.
 
