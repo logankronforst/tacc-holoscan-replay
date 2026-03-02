@@ -97,15 +97,17 @@ Synthetic GPU workload support (for efficiency probing):
 | 604473 | replay chain (gg, none) | COMPLETED | 00:00:31 | smoke + unpaced full + paced + GPU slot (`CHAIN_GPU_WORKLOAD=none`) |
 | 604760 | replay chain (input typo repeat) | FAILED | 00:00:10 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
 | 604761 | replay chain (gg, matmul requested) | FAILED | 00:00:28 | replay stages completed; synthetic GPU init failed (`cupy` missing, `torch` without CUDA) |
+| 604775 | replay chain (gg-dev, matmul requested) | COMPLETED | 00:00:35 | smoke + unpaced + paced + GPU slot (`CHAIN_GPU_WORKLOAD=matmul`, `CHAIN_GPU_BACKEND=auto`), backend `torch` |
 | 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
 ## March 2 Concrete Chain Results (Replay-Only)
 - Completed chain jobs with identical workload pattern: `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473`.
-- Additional replay-only chain attempt with `CHAIN_GPU_WORKLOAD=matmul`:
+- Additional replay-only chain with active `CHAIN_GPU_WORKLOAD=matmul`:
+  - `604775` completed all chain stages with backend `torch` (`gpu_matmul` stage executed and completed).
   - `604761` reached smoke + full + paced stages before failing during GPU benchmark init due CUDA backend unavailability.
-  - `604761` full unpaced: `462.04 FPS`, `115.51 MiB/s`, `p95 2.898 ms` (`800` frames).
-  - `604761` paced 60 FPS: exact target (`60.00 FPS`, `15.00 MiB/s`).
+- `604761` full unpaced: `462.04 FPS`, `115.51 MiB/s`, `p95 2.898 ms` (`800` frames).
+- `604761` paced 60 FPS: exact target (`60.00 FPS`, `15.00 MiB/s`).
 - Unpaced full run aggregate (800 files, metadata not used):
   - Achieved FPS: min `450.35`, max `537.62`, mean `497.76`.
   - I/O throughput: min `112.59` MiB/s, max `134.41` MiB/s, mean `124.44` MiB/s.
@@ -114,7 +116,7 @@ Synthetic GPU workload support (for efficiency probing):
 - Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
 
 ### Reusable Summary for Reporting
-- Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473` (identical profile).
+- Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473` (identical profile), plus `604775` (active GPU workload).
 - Quantified outcomes:
   - Unpaced full mean FPS: `497.76` (range `450.35`–`537.62`).
   - Unpaced full IO: `124.44 MiB/s` mean (range `112.59`–`134.41 MiB/s`).
@@ -123,6 +125,7 @@ Synthetic GPU workload support (for efficiency probing):
 - Failure modes logged with causes:
   - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
   - `604761`: replay stages ran, but GPU synthetic init failed in same way (`cupy` missing, `torch` without CUDA).
+  - `604775`: replay stage success with `torch` backend in `gpu_matmul`; nvidia-smi utility still reported `0%` util at 500ms sampling while memory/power changed (`~676 MiB` allocation and `132W` peak), so short-burst under-sampling remains plausible.
   - `604243`/`604276`: `INPUT_DIR` typo in submit path export.
   - `604760`: `INPUT_DIR` typo (`/scratch/11039/logankforst/replay_data`).
 - Full raw outputs are linked for exact values in:
@@ -176,6 +179,9 @@ Observed behavior:
 - Synthetic GPU probe (`603104`) shows backend activation (`torch`), `gpu_work_calls=200`, memory rise (~2 MiB to ~676 MiB), and power rise (~90W to ~136W), while sampled `utilization.gpu` still reports `0%`.
 - Most recent `gg` replay chain runs (`604249`, `604250`, `604271`, `604463`, `604473`, `604244`) completed with `gpu_monitor_status.txt` containing `nvidia-smi` unavailable, so no telemetry file is produced.
 - `604469` produced a telemetry file with `CHAIN_GPU_WORKLOAD=none`, so samples are expectedly idle (mean GPU util 0%, `gpu_work_calls=0`).
+- `604775` produced `gpu_metrics.csv` with `CHAIN_GPU_WORKLOAD=matmul` and backend `torch`:
+  - `gpu work calls=200`, memory moved `0 -> 676 MiB`, power peaked around `132.44 W`,
+  - `utilization.gpu` remained `0%` at `-lms 500` cadence, indicating likely under-sampling of short bursts.
 
 Conclusion from telemetry:
 - On this workload/platform, `utilization.gpu [%]` alone is insufficient to infer true GPU activity.
@@ -255,6 +261,6 @@ sbatch --parsable -A CCR25007 -p gh \
 Current status as of March 2, 2026:
 - Replay workflow and reporting pipeline are stable and reproducible on Vista.
 - Timestamp-file handling is explicitly validated.
-- Synthetic GPU workload path is implemented; execution is currently blocked on current nodes by missing CUDA (`cupy` absent, `torch` no CUDA).
+- Synthetic GPU workload path is now executable on at least one tested path (`gh-dev`) using `CHAIN_GPU_WORKLOAD=matmul` with `torch` backend; remaining work centers on reliable GPU-util telemetry sampling and partition consistency.
 - Live Sensor Bridge parity remains out of scope and unclaimed.
 - Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473}`; telemetry was unavailable on `604244,604249,604250,604271,604463,604473`, while `604469` has `gpu_metrics.csv` showing idle-utility behavior.
