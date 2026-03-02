@@ -143,6 +143,7 @@ Synthetic GPU workload support (for efficiency probing):
 - Failure modes logged with causes:
   - `604879`: `input dir not found: /scratch/11039/logankforst/replay_data` from submit typo.
   - `605012`/`605013`: same input typo (`/scratch/11039/logankforst/replay_data`) during `gh-dev` re-submits.
+  - `604870`/`604874`: same input typo (`/scratch/11039/logankforst/replay_data`) in earlier `hs_replay_gpu_none` submissions.
   - `604796`/`604797`/`604798`: same `INPUT_DIR` typo (`/scratch/11039/logankforst/replay_data`) in benchmark submit exports.
   - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
   - `604761`: replay stages ran, but GPU synthetic init failed in same way (`cupy` missing, `torch` without CUDA).
