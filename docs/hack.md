@@ -104,7 +104,7 @@ Synthetic GPU workload support (for efficiency probing):
 | 604796 | benchmark GPU probe (typo path) | FAILED | 00:00:06 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
 | 604797 | benchmark GPU probe (typo path) | FAILED | 00:00:10 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
 | 604798 | benchmark GPU probe (typo path) | FAILED | 00:00:07 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
-| 604803 | benchmark GPU probe | PENDING | - | Submitted on `gh` with corrected `INPUT_DIR`, waiting on scheduler `Priority` |
+| 604803 | benchmark GPU probe (full, matmul) | COMPLETED | 00:00:14 | `GPU_WORKLOAD=matmul`, `GPU_ITERS=4`, `GPU_WORK_EVERY_N=1`, `READ_MODE=full`, `MAX_FILES=3200` |
 | 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
@@ -122,10 +122,9 @@ Synthetic GPU workload support (for efficiency probing):
 - Benchmark-only GPU-path datapoints:
   - `604794` (matmul every frame, `1024`, `iters=4`): `449.94 FPS`, `112.48 MiB/s`, `p95 2.56 ms`, `gpu_work_calls=800`.
   - `604795` (matmul every 10 frames, `1024`, `iters=2`): `473.60 FPS`, `118.40 MiB/s`, `p95 2.69 ms`, `gpu_work_calls=80`.
+  - `604803` (matmul every frame, `1024`, `iters=4`, `max_files=3200`): `438.87 FPS`, `109.72 MiB/s`, `p95 2.65 ms`, `gpu_work_calls=800`.
 - Paced 60 FPS runs met target exactly: replay-full paced runs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
 - Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
-
-- `604803` remains queued on `gh` (`Priority`) at the time of this update; it has not generated metrics yet.
 
 ### Reusable Summary for Reporting
 - Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271` (metadata/full pattern), plus `604775` (active GPU workload).
@@ -175,6 +174,7 @@ Synthetic GPU workload support (for efficiency probing):
 | 604781 | chain-full-unpaced-604781 | full | 0 | 800 | 1.64 | 487.44 | 121.86 |
 | 604794 | bench-604794 | full | 0 | 800 | 1.78 | 449.94 | 112.48 |
 | 604795 | bench-604795 | full | 0 | 800 | 1.78 | 473.60 | 118.40 |
+| 604803 | bench-604803 | full | 0 | 800 | 1.82 | 438.87 | 109.72 |
 
 Interpretation notes:
 - `metadata` mode unpaced runs are control-path fast paths and are not representative of end-to-end operator compute.
@@ -294,5 +294,4 @@ Current status as of March 2, 2026:
 - Live Sensor Bridge parity remains out of scope and unclaimed.
 - Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473,604775,604781}`; telemetry was unavailable on `604244,604249,604250,604271,604463,604473`, while `604469,604775,604781` include GPU telemetry artifacts.
 - Current outstanding runs:
-  - `604803` on `gh` is `PENDING` (`Priority`) with valid parameters and corrected path.
   - `604239` remains `PENDING` (DependencyNeverSatisfied) in unrelated geospatial workflow (`tacc-gpu-geospatial`).
