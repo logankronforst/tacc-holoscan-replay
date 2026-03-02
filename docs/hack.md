@@ -99,6 +99,8 @@ Synthetic GPU workload support (for efficiency probing):
 | 604761 | replay chain (gg, matmul requested) | FAILED | 00:00:28 | replay stages completed; synthetic GPU init failed (`cupy` missing, `torch` without CUDA) |
 | 604775 | replay chain (gg-dev, matmul requested) | COMPLETED | 00:00:35 | smoke + unpaced + paced + GPU slot (`CHAIN_GPU_WORKLOAD=matmul`, `CHAIN_GPU_BACKEND=auto`), backend `torch` |
 | 604781 | replay chain (gg-dev, matmul-in-gpu-slot) | COMPLETED | 00:00:35 | smoke + unpaced + paced + GPU slot (`CHAIN_GPU_WORKLOAD=matmul`, `CHAIN_GPU_BACKEND=auto`); chain full/paced runs used `gpu_workload=none` |
+| 604794 | benchmark-only GPU probe (full) | COMPLETED | 00:00:13 | `GPU_WORKLOAD=matmul`, `GPU_ITERS=4`, `GPU_WORK_EVERY_N=1` in `gh-dev` |
+| 604795 | benchmark-only GPU probe (throttled) | COMPLETED | 00:00:11 | `GPU_WORKLOAD=matmul`, `GPU_ITERS=2`, `GPU_WORK_EVERY_N=10` in `gh-dev` |
 | 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
@@ -113,6 +115,9 @@ Synthetic GPU workload support (for efficiency probing):
   - Achieved FPS: min `450.35`, max `537.62`, mean `496.47` (`604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473`, `604781`).
   - I/O throughput: min `112.59` MiB/s, max `134.41` MiB/s, mean `124.12` MiB/s.
   - p95 frame time: min `2.251 ms`, max `2.628 ms`, mean `2.426 ms`.
+- Benchmark-only GPU-path datapoints:
+  - `604794` (matmul every frame, `1024`, `iters=4`): `449.94 FPS`, `112.48 MiB/s`, `p95 2.56 ms`, `gpu_work_calls=800`.
+  - `604795` (matmul every 10 frames, `1024`, `iters=2`): `473.60 FPS`, `118.40 MiB/s`, `p95 2.69 ms`, `gpu_work_calls=80`.
 - Paced 60 FPS runs met target exactly: all eight replay-full paced runs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
 - Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
 
@@ -126,6 +131,8 @@ Synthetic GPU workload support (for efficiency probing):
 - Failure modes logged with causes:
   - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
   - `604761`: replay stages ran, but GPU synthetic init failed in same way (`cupy` missing, `torch` without CUDA).
+  - `604794`: `torch` backend, `gpu_work_calls=800`, memory `2 -> 676 MiB`, power `70.61 -> 159.46 W`, sampled util mean `3.15%`, max `11%`.
+  - `604795`: `torch` backend, `gpu_work_calls=80`, memory `4 -> 680 MiB`, power `93.93 -> 141.88 W`, sampled util mean `0.33%`, max `3%`.
   - `604775`: replay stage success with `torch` backend in `gpu_matmul`; nvidia-smi reported `0%` sampled GPU util while memory/power changed (`0 -> 676 MiB`, `86.48 -> 132.44 W`), so under-sampling of short bursts is likely.
   - `604781`: replay stage success with `torch` backend in `gpu_matmul`; nvidia-smi sampled `0%` util for all 1362 samples despite workload duration shifts (`~2 -> 678 MiB`, power `~70.23 -> 115.95 W`).
   - `604243`/`604276`: `INPUT_DIR` typo in submit path export.
@@ -186,9 +193,15 @@ Observed behavior:
 - `604775` produced `gpu_metrics.csv` with `CHAIN_GPU_WORKLOAD=matmul` and backend `torch`:
   - `gpu work calls=200`, memory moved `0 -> 676 MiB`, power peaked around `132.44 W`,
   - `utilization.gpu` remained `0%` at `-lms 500` cadence, indicating likely under-sampling of short bursts.
+- `604794` produced `gpu_metrics.csv` in direct benchmark mode with `GPU_WORKLOAD=matmul`, `iters=4`, `work_every_n=1`:
+  - `gpu work calls=800`, memory moved `2 -> 676 MiB`, power `70.61 -> 159.46 W`,
+  - sampled `utilization.gpu` mean `3.15%`, max `11%` (interval = 20ms).
 - `604781` produced `gpu_metrics.csv` with `CHAIN_GPU_WORKLOAD=matmul` and backend `torch`:
   - `gpu work calls=200`, memory moved roughly `2 -> 678 MiB`, power around `70.23 -> 115.95 W`,
   - sampled `utilization.gpu` remained `0%` across all 1362 samples at `-lms 20`.
+- `604795` produced `gpu_metrics.csv` in direct benchmark mode with `GPU_WORKLOAD=matmul`, `iters=2`, `work_every_n=10`:
+  - `gpu work calls=80`, memory moved `4 -> 680 MiB`, power `93.93 -> 141.88 W`,
+  - sampled `utilization.gpu` mean `0.33%`, max `3%` (interval = 20ms).
 
 Conclusion from telemetry:
 - On this workload/platform, `utilization.gpu [%]` alone is insufficient to infer true GPU activity.
