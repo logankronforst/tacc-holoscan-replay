@@ -166,8 +166,8 @@ Telemetry method:
 Observed behavior:
 - Baseline replay runs show sustained `utilization.gpu = 0%` while jobs still complete and produce throughput.
 - Synthetic GPU probe (`603104`) shows backend activation (`torch`), `gpu_work_calls=200`, memory rise (~2 MiB to ~676 MiB), and power rise (~90W to ~136W), while sampled `utilization.gpu` still reports `0%`.
-- Recent `gg` replay chain runs (`604249`, `604250`, `604271`, `604463`, `604473`) complete with `gpu_monitor_status.txt` containing `nvidia-smi` unavailable, so no telemetry file is produced.
-- 604244 (`gh`) also lacked `gpu_metrics.csv`, indicating node-level utility/tooling inconsistency across partitions.
+- Most recent `gg` replay chain runs (`604249`, `604250`, `604271`, `604463`, `604473`, `604244`) completed with `gpu_monitor_status.txt` containing `nvidia-smi` unavailable, so no telemetry file is produced.
+- `604469` produced a telemetry file with `CHAIN_GPU_WORKLOAD=none`, so samples are expectedly idle (mean GPU util 0%, `gpu_work_calls=0`).
 
 Conclusion from telemetry:
 - On this workload/platform, `utilization.gpu [%]` alone is insufficient to infer true GPU activity.
@@ -249,4 +249,4 @@ Current status as of March 2, 2026:
 - Timestamp-file handling is explicitly validated.
 - Synthetic GPU workload path is implemented; execution is currently blocked on current nodes by missing CUDA (`cupy` absent, `torch` no CUDA).
 - Live Sensor Bridge parity remains out of scope and unclaimed.
-- Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473}`; no GPU telemetry captured on those host sets (`nvidia-smi unavailable`).
+- Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473}`; telemetry was unavailable on `604244,604249,604250,604271,604463,604473`, while `604469` has `gpu_metrics.csv` showing idle-utility behavior.
