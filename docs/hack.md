@@ -99,20 +99,20 @@ Synthetic GPU workload support (for efficiency probing):
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
 ## March 2 Concrete Chain Results (Replay-Only)
-- Completed chain jobs with identical workload pattern: `604244`, `604249`, `604250`, `604271`, `604463`, `604473`.
+- Completed chain jobs with identical workload pattern: `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473`.
 - Unpaced full run aggregate (800 files, metadata not used):
-  - Achieved FPS: min `479.75`, max `537.62`, mean `505.66`.
-  - I/O throughput: min `119.94` MiB/s, max `134.41` MiB/s, mean `126.42` MiB/s.
-  - p95 frame time: min `2.251 ms`, max `2.628 ms`, mean `2.391 ms`.
-- Paced 60 FPS runs met target exactly: all six jobs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
+  - Achieved FPS: min `450.35`, max `537.62`, mean `497.76`.
+  - I/O throughput: min `112.59` MiB/s, max `134.41` MiB/s, mean `124.44` MiB/s.
+  - p95 frame time: min `2.251 ms`, max `2.628 ms`, mean `2.397 ms`.
+- Paced 60 FPS runs met target exactly: all seven jobs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
 - Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
 
 ### Reusable Summary for Reporting
-- Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271`, `604463`, `604473` (identical profile).
+- Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473` (identical profile).
 - Quantified outcomes:
-  - Unpaced full mean FPS: `505.66` (range `479.75`–`537.62`).
-  - Unpaced full IO: `126.42 MiB/s` mean (range `119.94`–`134.41 MiB/s`).
-  - Unpaced full p95 latency: `2.391 ms` mean (range `2.251`–`2.628 ms`).
+  - Unpaced full mean FPS: `497.76` (range `450.35`–`537.62`).
+  - Unpaced full IO: `124.44 MiB/s` mean (range `112.59`–`134.41 MiB/s`).
+  - Unpaced full p95 latency: `2.397 ms` mean (range `2.251`–`2.628 ms`).
 - Paced 60 FPS behavior: all runs held target exactly (`60.00 FPS`, `15.00 MiB/s`, `~16.668 ms` p95).
 - Failure modes logged with causes:
   - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
@@ -142,6 +142,7 @@ Synthetic GPU workload support (for efficiency probing):
 | 604250 | chain-full-unpaced-604250 | full | 0 | 800 | 1.58 | 507.37 | 126.84 |
 | 604271 | chain-full-unpaced-604271 | full | 0 | 800 | 1.60 | 501.67 | 125.42 |
 | 604463 | chain-full-unpaced-604463 | full | 0 | 800 | 1.63 | 492.25 | 123.06 |
+| 604469 | chain-full-unpaced-604469 | full | 0 | 800 | 1.49 | 450.35 | 112.59 |
 | 604473 | chain-full-unpaced-604473 | full | 0 | 800 | 1.49 | 537.62 | 134.41 |
 
 Interpretation notes:
@@ -248,4 +249,4 @@ Current status as of March 2, 2026:
 - Timestamp-file handling is explicitly validated.
 - Synthetic GPU workload path is implemented; execution is currently blocked on current nodes by missing CUDA (`cupy` absent, `torch` no CUDA).
 - Live Sensor Bridge parity remains out of scope and unclaimed.
-- Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604473}`; no GPU telemetry captured on those host sets (`nvidia-smi unavailable`).
+- Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473}`; no GPU telemetry captured on those host sets (`nvidia-smi unavailable`).
