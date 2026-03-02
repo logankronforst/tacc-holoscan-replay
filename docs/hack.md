@@ -26,7 +26,7 @@ Not validated in this campaign:
 ## Platform and Runtime
 - System: TACC Vista.
 - Account used: `CCR25007`.
-- Partitions used in this campaign: `gh`, `gg`.
+- Partitions used in this campaign: `gh`, `gh-dev`.
 - GPU observed: NVIDIA GH200 120GB on nodes where telemetry is available.
 - Replay input root: `/scratch/11039/logankronforst/replay_data`.
 - Repo root: `/work/11039/logankronforst/vista/tacc-holoscan-replay`.
@@ -101,34 +101,41 @@ Synthetic GPU workload support (for efficiency probing):
 | 604781 | replay chain (gg-dev, matmul-in-gpu-slot) | COMPLETED | 00:00:35 | smoke + unpaced + paced + GPU slot (`CHAIN_GPU_WORKLOAD=matmul`, `CHAIN_GPU_BACKEND=auto`); chain full/paced runs used `gpu_workload=none` |
 | 604794 | benchmark-only GPU probe (full) | COMPLETED | 00:00:13 | `GPU_WORKLOAD=matmul`, `GPU_ITERS=4`, `GPU_WORK_EVERY_N=1` in `gh-dev` |
 | 604795 | benchmark-only GPU probe (throttled) | COMPLETED | 00:00:11 | `GPU_WORKLOAD=matmul`, `GPU_ITERS=2`, `GPU_WORK_EVERY_N=10` in `gh-dev` |
+| 604796 | benchmark GPU probe (typo path) | FAILED | 00:00:06 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
+| 604797 | benchmark GPU probe (typo path) | FAILED | 00:00:10 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
+| 604798 | benchmark GPU probe (typo path) | FAILED | 00:00:07 | `INPUT_DIR` typo: `/scratch/11039/logankforst/replay_data` |
+| 604803 | benchmark GPU probe | PENDING | - | Submitted on `gh` with corrected `INPUT_DIR`, waiting on scheduler `Priority` |
 | 604276 | replay chain (gg, matmul) | FAILED | 00:00:09 | `INPUT_DIR` typo in submit export again |
 | 604279 | replay chain (gg, matmul) | FAILED | 00:00:28 | `cupy` missing and `torch` CUDA unavailable |
 
 ## March 2 Concrete Chain Results (Replay-Only)
-- Completed chain jobs with identical workload pattern: `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473`, `604781`.
+- Completed chain jobs with identical workload pattern: `604244`, `604249`, `604250`, `604271`.
+- Focused replay-only aggregate for this exact profile:
+  - Unpaced full mean FPS: `501.03` (range `479.75`–`515.32`)
+  - Unpaced full IO: `125.26 MiB/s` (range `119.94`–`128.83`)
+  - Unpaced full p95 latency: `2.405 ms` (range `2.278`–`2.628 ms`)
 - Additional replay-only chain with active `CHAIN_GPU_WORKLOAD=matmul`:
   - `604775` completed all chain stages with backend `torch` (`gpu_matmul` stage executed and completed).
   - `604761` reached smoke + full + paced stages before failing during GPU benchmark init due CUDA backend unavailability.
 - `604761` full unpaced: `462.04 FPS`, `115.51 MiB/s`, `p95 2.898 ms` (`800` frames).
 - `604761` paced 60 FPS: exact target (`60.00 FPS`, `15.00 MiB/s`).
-- Unpaced full run aggregate (800 files, metadata not used):
-  - Achieved FPS: min `450.35`, max `537.62`, mean `496.47` (`604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473`, `604781`).
-  - I/O throughput: min `112.59` MiB/s, max `134.41` MiB/s, mean `124.12` MiB/s.
-  - p95 frame time: min `2.251 ms`, max `2.628 ms`, mean `2.426 ms`.
 - Benchmark-only GPU-path datapoints:
   - `604794` (matmul every frame, `1024`, `iters=4`): `449.94 FPS`, `112.48 MiB/s`, `p95 2.56 ms`, `gpu_work_calls=800`.
   - `604795` (matmul every 10 frames, `1024`, `iters=2`): `473.60 FPS`, `118.40 MiB/s`, `p95 2.69 ms`, `gpu_work_calls=80`.
-- Paced 60 FPS runs met target exactly: all eight replay-full paced runs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
+- Paced 60 FPS runs met target exactly: replay-full paced runs produced `60.00 FPS`, `15.00 MiB/s`, p95 `~16.668 ms`.
 - Smoke control runs (200 files) are control-path only and show non-representative micro-bench performance.
 
+- `604803` remains queued on `gh` (`Priority`) at the time of this update; it has not generated metrics yet.
+
 ### Reusable Summary for Reporting
-- Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271`, `604463`, `604469`, `604473`, `604781` (metadata/full pattern), plus `604775` (active GPU workload).
+- Completed chain jobs + outcomes (replay-only): `604244`, `604249`, `604250`, `604271` (metadata/full pattern), plus `604775` (active GPU workload).
 - Quantified outcomes:
-  - Unpaced full mean FPS: `496.47` (range `450.35`–`537.62`).
-  - Unpaced full IO: `124.12 MiB/s` mean (range `112.59`–`134.41 MiB/s`).
-  - Unpaced full p95 latency: `2.426 ms` mean (range `2.251`–`2.628 ms`).
+  - Unpaced full mean FPS: `501.03` (range `479.75`–`515.32`).
+  - Unpaced full IO: `125.26 MiB/s` (range `119.94`–`128.83`).
+  - Unpaced full p95 latency: `2.405 ms` (range `2.278`–`2.628 ms`).
 - Paced 60 FPS behavior: all runs held target exactly (`60.00 FPS`, `15.00 MiB/s`, `~16.668 ms` p95).
 - Failure modes logged with causes:
+  - `604796`/`604797`/`604798`: same `INPUT_DIR` typo (`/scratch/11039/logankforst/replay_data`) in benchmark submit exports.
   - `604242`/`604279`: missing CUDA stack (`cupy` missing, `torch` without CUDA).
   - `604761`: replay stages ran, but GPU synthetic init failed in same way (`cupy` missing, `torch` without CUDA).
   - `604794`: `torch` backend, `gpu_work_calls=800`, memory `2 -> 676 MiB`, power `70.61 -> 159.46 W`, sampled util mean `3.15%`, max `11%`.
@@ -166,6 +173,8 @@ Synthetic GPU workload support (for efficiency probing):
 | 604473 | chain-full-unpaced-604473 | full | 0 | 800 | 1.49 | 537.62 | 134.41 |
 | 604775 | chain-full-unpaced-604775 | full | 0 | 800 | 1.81 | 442.28 | 110.57 |
 | 604781 | chain-full-unpaced-604781 | full | 0 | 800 | 1.64 | 487.44 | 121.86 |
+| 604794 | bench-604794 | full | 0 | 800 | 1.78 | 449.94 | 112.48 |
+| 604795 | bench-604795 | full | 0 | 800 | 1.78 | 473.60 | 118.40 |
 
 Interpretation notes:
 - `metadata` mode unpaced runs are control-path fast paths and are not representative of end-to-end operator compute.
@@ -195,13 +204,13 @@ Observed behavior:
   - `utilization.gpu` remained `0%` at `-lms 500` cadence, indicating likely under-sampling of short bursts.
 - `604794` produced `gpu_metrics.csv` in direct benchmark mode with `GPU_WORKLOAD=matmul`, `iters=4`, `work_every_n=1`:
   - `gpu work calls=800`, memory moved `2 -> 676 MiB`, power `70.61 -> 159.46 W`,
-  - sampled `utilization.gpu` mean `3.15%`, max `11%` (interval = 20ms).
+  - sampled `utilization.gpu` mean `3.15%`, max `11%` (interval = 20ms), 289 samples.
 - `604781` produced `gpu_metrics.csv` with `CHAIN_GPU_WORKLOAD=matmul` and backend `torch`:
   - `gpu work calls=200`, memory moved roughly `2 -> 678 MiB`, power around `70.23 -> 115.95 W`,
   - sampled `utilization.gpu` remained `0%` across all 1362 samples at `-lms 20`.
 - `604795` produced `gpu_metrics.csv` in direct benchmark mode with `GPU_WORKLOAD=matmul`, `iters=2`, `work_every_n=10`:
   - `gpu work calls=80`, memory moved `4 -> 680 MiB`, power `93.93 -> 141.88 W`,
-  - sampled `utilization.gpu` mean `0.33%`, max `3%` (interval = 20ms).
+  - sampled `utilization.gpu` mean `0.33%`, max `3%` (interval = 20ms), 300 samples.
 
 Conclusion from telemetry:
 - On this workload/platform, `utilization.gpu [%]` alone is insufficient to infer true GPU activity.
@@ -284,6 +293,6 @@ Current status as of March 2, 2026:
 - Synthetic GPU workload path is now executable on at least one tested path (`gh-dev`) using `CHAIN_GPU_WORKLOAD=matmul` with `torch` backend; remaining work centers on reliable GPU-util telemetry sampling and partition consistency.
 - Live Sensor Bridge parity remains out of scope and unclaimed.
 - Latest completed replay-only chain set is in `results/chain/{604244,604249,604250,604271,604463,604469,604473,604775,604781}`; telemetry was unavailable on `604244,604249,604250,604271,604463,604473`, while `604469,604775,604781` include GPU telemetry artifacts.
-- Pending jobs observed in scheduler at last check:
-  - `604239` (Dependency) waiting on unsatisfied chain dependency.
-  - `604770` (Priority) in `gh` queue.
+- Current outstanding runs:
+  - `604803` on `gh` is `PENDING` (`Priority`) with valid parameters and corrected path.
+  - `604239` remains `PENDING` (DependencyNeverSatisfied) in unrelated geospatial workflow (`tacc-gpu-geospatial`).
